@@ -1,15 +1,25 @@
 var dgram = Npm.require('dgram');
+var net = Npm.require('net');
 
 /**
  * Create a new StatsD client
  * @param {string} host   The host IP address or domain name (no protocol)
- * @param {int} port      The port running StatsD on the host (usually 8125)
+ * @param {int} port      The port running StatsD on the host (usually 8125).
+ *                        give a String like "tcp:8125" to use TCP sockets.
  * @param {string} prefix Optional prefix for all metrics.
  * @param {bool} debug    If true, `track` will happen synchronously so you will see errors. 
  *                        Otherwise it will happen asynchronously with no callback (it uses 
  *                        UDP anyway and we don't want to block)
  */
 StatsD = function(host, port, prefix, debug) {
+  var match;
+  if(typeof(port) == 'string' && (match = port.match(/^(tcp|udp|unix):(.*)$/))) {
+    this._proto = match[1];
+    port = this._proto == 'unix' ? match[2] : Number(match[2]);
+  } else {
+    this._proto = 'udp';
+  }
+
   this._host = host;
   this._port = port;
   if (prefix) {
@@ -22,13 +32,34 @@ StatsD = function(host, port, prefix, debug) {
  * Explicitly open the UDP socket connection for reuse.
  */
 StatsD.prototype._openSocket = function() {
-  this._client = dgram.createSocket('udp4');
+  var that = this;
+
+  if(this._proto == 'udp') {
+    this._client = dgram.createSocket('udp4');
+  } else {
+    if(this._proto == 'unix') {
+      this._client = net.createConnection(this._port);
+    } else {
+      this._client = net.createConnection(this._port, this._host);
+    }
+
+    this._client.send = function(buf, offset, length, port, address, callback) {
+      that._client.write(buf.slice(offset, offset+length) + "\n", callback);
+    };
+
+    this._client.on('close', function() {
+      that._client = null;
+    });
+
+    this._client.on('error', function(e) {
+      console.log("StatsD socket error: " +e);
+    });
+  }
 
   // Add the sync method for sending
   if (this._debug) {
     this._client.sendSync = Meteor.wrapAsync(this._client.send, this._client);
   }
-
 };
 
 /**
@@ -43,9 +74,10 @@ StatsD.prototype.track = function(metric, value, options) {
 
   var msg = this._generateMessage(metric, value, options);
 
-  // This is UDP, so we technically *can't* care if it makes it. Thus, it doesn't 
-  // make sense to do this with Meteor.wrapAsync, UNLESS it's debug mode and we want 
-  // to see if stuff is even connecting.
+  // Previously, this was all UDP.  Now TCP is an option, but we
+  // retain a default-async behavior because it's still expected
+  // to be lossy, and shouldn't block.  Unless it should, because
+  // _debug.
   var methodName = this._debug ? 'sendSync' : 'send';
   if (this._debug) {
     console.log('Sending ' + msg.toString());
@@ -139,7 +171,12 @@ StatsD.prototype._generateMessage = function(metric, value, options) {
  */
 StatsD.prototype.closeSocket = function() {
   if (this._client) {
-    this._client.close();
+    if(this._proto == 'udp') {
+      this._client.close();
+    } else {
+      this._client.end();
+    }
+    this._client = null;
   }
 };
 

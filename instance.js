@@ -4,14 +4,17 @@ StatsD._loadClient = function() {
     try {
       check(Meteor.settings.statsd, {
         host: String,
-        port: Number,
-        prefix: String
+        port: Match.OneOf(Number, String),
+        prefix: String,
+        debug: Match.Optional(Boolean)
       });
     } catch (err) {
       throw new Error('Invalid statsd settings (need host, port, and prefix)');
     }
 
-    StatsD._instance = new StatsD(Meteor.settings.statsd.host, Meteor.settings.statsd.port, Meteor.settings.statsd.prefix);
+    StatsD._instance = new StatsD(Meteor.settings.statsd.host,
+      Meteor.settings.statsd.port, Meteor.settings.statsd.prefix,
+      Meteor.settings.statsd.debug);
   } else {
     console.error('Warning: StatsD is not configured! Metrics will not be tracked');
   }

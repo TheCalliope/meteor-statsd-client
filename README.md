@@ -23,6 +23,28 @@ var client = new StatsD('statsd.host.com', 8125, 'myPrefix');
 
 Note that the UDP socket is lazy-loaded, but you can explicitly open and close it using `client._openSocket()` and `client.closeSocket()`. `_openSocket()` is "private" because it is called internally when the first metric is tracked.
 
+# TCP and Unix domain socket support
+
+You can also give a String with a protocol for a port.  This requires TCP
+support on the StatsD server side (etsy statsd v0.8.0).
+
+```javascript
+// TCP
+var client = new StatsD('statsd.host.com', 'tcp:8125', 'myPrefix');
+
+// Unix domain socket
+var client = new StatsD('localhost', 'unix:/tmp/statsd.sock', 'myPrefix');
+
+// UDP also supported this way...
+var client = new StatsD('statsd.host.com', 'udp:8125', 'myPrefix');
+```
+
+TCP sockets are also lazy-loaded, and can be explicitly opened with the
+same calls as UDP.  If the server disconnects, TCP sockets will reconnect
+at the next metric transmission.  If it fails to connect, it will log the
+failure via `console.log()` and **drop your metric**.  This parallels what
+would happen for UDP transmissions.
+
 # Usage
 See https://github.com/etsy/statsd/blob/master/docs/metric_types.md for information on metric types.
 
