@@ -1,10 +1,10 @@
 Package.describe({
-  name: 'dispatch:statsd-client',
+  name: 'calliopewater:statsd-client',
   version: '0.1.2',
   // Brief, one-line summary of the package.
-  summary: 'A bare-bones StatsD client for meteor',
+  summary: 'A bare-bones StatsD client for meteor, with UDP, TCP, and Unix socket support',
   // URL to the Git repository containing the source code for this package.
-  git: 'https://github.com/DispatchMe/meteor-statsd-client',
+  git: 'https://github.com/TheCalliope/meteor-statsd-client',
   // By default, Meteor will default to using README.md for documentation.
   // To avoid submitting documentation, set this field to null.
   documentation: 'README.md'
