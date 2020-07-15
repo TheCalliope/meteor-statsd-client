@@ -163,7 +163,7 @@ StatsD.prototype._generateMessage = function(metric, value, options) {
   }
 
   // Create the message
-  return new Buffer(packet);
+  return Buffer.from(packet);
 };
 
 /**
