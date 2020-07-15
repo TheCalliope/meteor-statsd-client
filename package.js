@@ -1,6 +1,6 @@
 Package.describe({
   name: 'jaydeebee:statsd-client',
-  version: '0.1.2',
+  version: "0.1.3",
   // Brief, one-line summary of the package.
   summary: 'A bare-bones StatsD client for meteor, patched for UDP, TCP, and Unix socket support',
   // URL to the Git repository containing the source code for this package.
@@ -18,7 +18,7 @@ Package.onUse(function(api) {
 });
 
 Package.onTest(function(api) {
-  api.use('tinytest');
-  api.use(['dispatch:statsd-client', 'practicalmeteor:sinon'], 'server');
-  api.addFiles('tests.js', 'server');
+  api.use("tinytest");
+  api.use(["dispatch:statsd-client", "practicalmeteor:sinon"], "server");
+  api.addFiles("tests.js", "server");
 });
